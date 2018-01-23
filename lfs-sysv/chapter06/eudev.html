@@ -1,0 +1,283 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+    <title>
+      6.65.&nbsp;Eudev-3.2.1
+    </title>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/lfs.css" />
+    <meta name="generator" content="DocBook XSL Stylesheets V1.78.1" />
+    <link rel="stylesheet" href="../stylesheets/lfs-print.css" type=
+    "text/css" media="print" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body class="lfs" id="lfs-8.0-rc1">
+    <div class="navheader">
+      <h4>
+        Linux From Scratch （简体中文版） - Version 8.0-rc1
+      </h4>
+      <h3>
+        第&nbsp;6&nbsp;章&nbsp;安装基本的系统软件
+      </h3>
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="sysvinit.html" title=
+          "Sysvinit-2.88dsf">上一页</a>
+          <p>
+            Sysvinit-2.88dsf
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="util-linux.html" title=
+          "Util-linux-2.29.1">下一页</a>
+          <p>
+            Util-linux-2.29.1
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter06.html" title=
+          "第&nbsp;6&nbsp;章&nbsp;安装基本的系统软件">上一级</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch （简体中文版） - Version 8.0-rc1 ">起始页</a>
+        </li>
+      </ul>
+    </div>
+    <div class="wrap" lang="zh" xml:lang="zh">
+      <h1 class="sect1">
+        <a id="ch-system-eudev" name="ch-system-eudev"></a>6.65. Eudev-3.2.1
+      </h1>
+      <div class="package" lang="zh" xml:lang="zh">
+        <p>
+          Eudev 软件包包含动态创建设备节点的程序。
+        </p>
+        <div class="segmentedlist">
+          <div class="seglistitem">
+            <div class="seg">
+              <strong class="segtitle">大概编译时间:</strong> <span class=
+              "segbody">0.2 SBU</span>
+            </div>
+            <div class="seg">
+              <strong class="segtitle">所需磁盘空间:</strong> <span class=
+              "segbody">78 MB</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="installation" lang="zh" xml:lang="zh">
+        <h2 class="sect2">
+          6.65.1. 安装 Eudev
+        </h2>
+        <p>
+          首先，修复一个测试脚本：
+        </p>
+        <pre class="userinput">
+<kbd class=
+"command">sed -r -i 's|/usr(/bin/test)|\1|' test/udev-test.pl</kbd>
+</pre>
+        <p>
+          接着，去掉会导致编译失败，又不需要的一行：
+        </p>
+        <pre class="userinput">
+<kbd class=
+"command">sed -i '/keyboard_lookup_key/d' src/udev/udev-builtin-keyboard.c</kbd>
+</pre>
+        <p>
+          接着，追加一个解决方案以保证 /tools 目录不会被硬编码到 Eudev 的二进制文件库处：
+        </p>
+        <pre class="userinput">
+<kbd class="command">cat &gt; config.cache &lt;&lt; "EOF"
+HAVE_BLKID=1
+BLKID_LIBS="-lblkid"
+BLKID_CFLAGS="-I/tools/include"
+EOF</kbd>
+</pre>
+        <p>
+          准备编译 Eudev：
+        </p>
+        <pre class="userinput">
+<kbd class="command">./configure --prefix=/usr           \
+            --bindir=/sbin          \
+            --sbindir=/sbin         \
+            --libdir=/usr/lib       \
+            --sysconfdir=/etc       \
+            --libexecdir=/lib       \
+            --with-rootprefix=      \
+            --with-rootlibdir=/lib  \
+            --enable-manpages       \
+            --disable-static        \
+            --config-cache</kbd>
+</pre>
+        <p>
+          编译软件包：
+        </p>
+        <pre class="userinput">
+<kbd class="command">LIBRARY_PATH=/tools/lib make</kbd>
+</pre>
+        <p>
+          现在创建一些目录，不仅仅是为了测试需求，一部分的安装操作也将用到：
+        </p>
+        <pre class="userinput">
+<kbd class="command">mkdir -pv /lib/udev/rules.d
+mkdir -pv /etc/udev/rules.d</kbd>
+</pre>
+        <p>
+          测试编译结果，通过：
+        </p>
+        <pre class="userinput">
+<kbd class="command">make LD_LIBRARY_PATH=/tools/lib check</kbd>
+</pre>
+        <p>
+          安装软件包：
+        </p>
+        <pre class="userinput">
+<kbd class="command">make LD_LIBRARY_PATH=/tools/lib install</kbd>
+</pre>
+        <p>
+          安装一些对 LFS 的环境中有益的自定义规则和支持文件：
+        </p>
+        <pre class="userinput">
+<kbd class="command">tar -xvf ../udev-lfs-20140408.tar.bz2
+make -f udev-lfs-20140408/Makefile.lfs install</kbd>
+</pre>
+      </div>
+      <div class="configuration" lang="zh" xml:lang="zh">
+        <h2 class="sect2">
+          <a id="conf-eudev" name="conf-eudev"></a>6.65.2. 配置 Eudev
+        </h2>
+        <p>
+          有关硬件的设备存放在 <code class="filename">/etc/udev/hwdb.d</code> 和
+          <code class="filename">/usr/lib/udev/hwdb.d</code> 目录中。<span class=
+          "application">Eudev</span> 需要将这些信息编译到一个二进制数据库文件 <code class=
+          "filename">/etc/udev/hwdb.bin</code> 中去。创建初始数据库：
+        </p>
+        <pre class="userinput">
+<kbd class="command">LD_LIBRARY_PATH=/tools/lib udevadm hwdb --update</kbd>
+</pre>
+        <p>
+          该命令需在每次更新硬件信息时运行。
+        </p>
+      </div>
+      <div class="content" lang="zh" xml:lang="zh">
+        <h2 class="sect2">
+          <a id="contents-eudev" name="contents-eudev"></a>6.65.3. Eudev
+          软件包的内容
+        </h2>
+        <div class="segmentedlist">
+          <div class="seglistitem">
+            <div class="seg">
+              <strong class="segtitle">安装的程序:</strong> <span class=
+              "segbody">udevadm and udevd</span>
+            </div>
+            <div class="seg">
+              <strong class="segtitle">安装的库:</strong> <span class=
+              "segbody">libudev.so</span>
+            </div>
+            <div class="seg">
+              <strong class="segtitle">安装的目录:</strong> <span class=
+              "segbody">/etc/udev, /lib/udev, 和
+              /usr/share/doc/udev-20140408</span>
+            </div>
+          </div>
+        </div>
+        <div class="variablelist">
+          <h3>
+            简要介绍
+          </h3>
+          <table border="0" class="variablelist">
+            <colgroup>
+              <col align="left" valign="top" />
+              <col />
+            </colgroup>
+            <tbody>
+              <tr>
+                <td>
+                  <p>
+                    <a id="udevadm" name="udevadm"></a><span class=
+                    "term"><span class=
+                    "command"><strong>udevadm</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    通用 udev 管理工具：控制守护进程 udevd，从 udev 数据库提供信息，监控 uevent，等待
+                    uevent 完成，测试 udev 配置，并为给定的设备触发 uevent
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="udevd" name="udevd"></a><span class=
+                    "term"><span class=
+                    "command"><strong>udevd</strong></span></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    一个守护进程，用于监听 netlink 套接字上 uevent，创建设备和运行这些 uevent
+                    的应答中已被配置了的外部命令
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="libudev" name="libudev"></a><span class=
+                    "term"><code class="filename">libudev</code></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    一个 udev 设备信息的库接口
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <p>
+                    <a id="etc-udev" name="etc-udev"></a><span class=
+                    "term"><code class="filename">/etc/udev</code></span>
+                  </p>
+                </td>
+                <td>
+                  <p>
+                    包含 udev 的配置文件，设备权限，以及设备命名规则
+                  </p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="navfooter">
+      <ul>
+        <li class="prev">
+          <a accesskey="p" href="sysvinit.html" title=
+          "Sysvinit-2.88dsf">上一页</a>
+          <p>
+            Sysvinit-2.88dsf
+          </p>
+        </li>
+        <li class="next">
+          <a accesskey="n" href="util-linux.html" title=
+          "Util-linux-2.29.1">下一页</a>
+          <p>
+            Util-linux-2.29.1
+          </p>
+        </li>
+        <li class="up">
+          <a accesskey="u" href="chapter06.html" title=
+          "第&nbsp;6&nbsp;章&nbsp;安装基本的系统软件">上一级</a>
+        </li>
+        <li class="home">
+          <a accesskey="h" href="../index.html" title=
+          "Linux From Scratch （简体中文版） - Version 8.0-rc1 ">起始页</a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>
